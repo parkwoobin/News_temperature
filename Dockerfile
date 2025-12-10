@@ -24,9 +24,18 @@ COPY app.py .
 COPY src/ src/
 COPY static/ static/
 
-# 설정 파일 복사 (.dockerignore로 모델 파일 자동 제외)
-COPY kosum-v1-tuned/ kosum-v1-tuned/
-COPY sentiment_model/ sentiment_model/
+# 설정 파일만 명시적으로 복사 (모델 파일 제외)
+COPY kosum-v1-tuned/config.json kosum-v1-tuned/
+COPY kosum-v1-tuned/generation_config.json kosum-v1-tuned/
+COPY kosum-v1-tuned/special_tokens_map.json kosum-v1-tuned/
+COPY kosum-v1-tuned/tokenizer.json kosum-v1-tuned/
+COPY kosum-v1-tuned/tokenizer_config.json kosum-v1-tuned/
+
+COPY sentiment_model/config.json sentiment_model/
+COPY sentiment_model/special_tokens_map.json sentiment_model/
+COPY sentiment_model/tokenizer.json sentiment_model/
+COPY sentiment_model/tokenizer_config.json sentiment_model/
+COPY sentiment_model/training_args.bin sentiment_model/
 
 # 포트 노출
 EXPOSE 8000
