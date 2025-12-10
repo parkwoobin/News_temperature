@@ -2060,7 +2060,10 @@ async def logout(request: Request):
 async def test_api(request: TestRequest, session: dict = Depends(require_login)):
     """뉴스 검색 및 분석 API 엔드포인트"""
     try:
-        print(f"[API] /api/test 요청 받음: query={request.query}, model_mode={request.model_mode}")
+        print(f"[API] ===== /api/test 요청 시작 =====")
+        print(f"[API] query={request.query}, model_mode={request.model_mode}")
+        print(f"[API] OpenAI 키 제공 여부: {bool(request.openai_api_key)}")
+        print(f"[API] max_results={request.max_results}, days={request.days}")
         
         # 모델 모드에 따라 요약 모드와 감정 분석 모드 결정
         # Free 플랜에서는 메모리 제한으로 로컬 모델 사용 시 크래시 가능성이 높음
@@ -2183,13 +2186,16 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
     except Exception as e:
         import traceback
         error_detail = traceback.format_exc()
-        print(f"[API] 예외 발생: {str(e)}")
+        print(f"[API] ❌❌❌ 예외 발생: {str(e)}")
         print(f"[API] 상세 오류:\n{error_detail}")
+        print(f"[API] ===== /api/test 요청 실패 =====")
         return JSONResponse({
             "success": False,
             "error": str(e),
             "detail": error_detail
         }, status_code=500)
+    finally:
+        print(f"[API] ===== /api/test 요청 종료 =====")
 
 
 @app.get("/api/health")
