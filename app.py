@@ -2146,23 +2146,17 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                     if crawler._is_english_article(title, description, text):
                         continue
                     
-                    # text가 없으면 description으로 요약 생성
-                    if not result.get('text') and description:
-                        print(f"[API] description으로 요약 생성: {title[:50]}")
-                        try:
-                            result['text'] = crawler.summarize_text(description)
-                            result['full_text'] = description  # 감정 분석용으로 description 사용
-                        except Exception as e:
-                            print(f"[API] 요약 생성 실패: {e}")
-                            result['text'] = description  # 요약 실패 시 description 그대로 사용
-                            result['full_text'] = description
-                    elif not result.get('text'):
+                    # crawl_news_with_full_text에서 이미 요약 생성됨
+                    # text가 없으면 description 사용 (요약 실패한 경우)
+                    if not result.get('text'):
                         result['text'] = description or ''
-                        result['full_text'] = description or ''
                     
-                    # full_text가 없으면 text를 full_text로 사용 (감정 분석용)
+                    # full_text 설정 (감정 분석용)
+                    # 요약본(text)을 full_text로 사용하거나 description 사용
                     if not result.get('full_text'):
                         result['full_text'] = result.get('text', '') or description or ''
+                    
+                    print(f"[API] 기사 {len(filtered_results)+1}: text={bool(result.get('text'))}, full_text={bool(result.get('full_text'))}")
                     
                     filtered_results.append(result)
                     if len(filtered_results) >= safe_max_results:
@@ -2209,6 +2203,13 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             import traceback
             traceback.print_exc()
             # 감정 분석 실패해도 뉴스는 반환
+        
+        print(f"[API] 응답 반환 준비: {len(results)}개 결과")
+        # 결과 확인 로그
+        for idx, result in enumerate(results):
+            has_text = bool(result.get('text'))
+            has_sentiment = bool(result.get('sentiment'))
+            print(f"[API] 결과 {idx+1}: text={has_text}, sentiment={has_sentiment}")
         
         print(f"[API] 응답 반환: {len(results)}개 결과")
         return JSONResponse({
