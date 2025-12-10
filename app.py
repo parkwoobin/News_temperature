@@ -2117,17 +2117,18 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             if request.max_results > 5:
                 print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (메모리 부족 방지)")
             
-            # 본문 추출과 요약 기능 활성화
-            print(f"[API] 본문 추출 및 요약 기능 활성화")
+            # 본문 추출과 요약 기능 활성화 (타임아웃 방지를 위해 선택적)
+            print(f"[API] 뉴스 검색 및 요약 시작")
             date_to = datetime.now().strftime('%Y%m%d')
             date_from = (datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d')
             
-            # crawl_news_with_full_text 사용 (본문 추출 + 요약)
-            # 본문 추출 실패해도 description으로 요약하도록 include_full_text=True 사용
+            # 타임아웃 방지를 위해 본문 추출 없이 먼저 시도
+            # description으로 요약 생성 (더 빠름)
+            print(f"[API] 빠른 모드: 본문 추출 없이 description으로 요약")
             results = crawler.crawl_news_with_full_text(
                 query=request.query,
-                max_results=safe_max_results * 2,  # 본문 추출 실패 대비하여 더 많이 수집
-                include_full_text=True,  # 본문 추출 활성화
+                max_results=safe_max_results,
+                include_full_text=False,  # 본문 추출 생략 (타임아웃 방지)
                 date_from=date_from,
                 date_to=date_to,
                 sort_by=request.sort_by
