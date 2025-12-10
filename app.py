@@ -446,21 +446,21 @@ async def home(request: Request):
                 margin-bottom: 12px;
                 font-size: 20px;
                 font-weight: 600;
-                line-height: 1.4;
+                line-height: 1.5;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
+                word-break: break-word;
                 letter-spacing: -0.3px;
                 white-space: normal !important;
                 display: block !important;
                 width: 100% !important;
                 overflow: visible !important;
-                text-overflow: clip !important;
+                text-overflow: unset !important;
                 max-height: none !important;
                 min-height: auto !important;
                 height: auto !important;
-                -webkit-line-clamp: unset !important;
-                line-clamp: unset !important;
-                text-overflow: unset !important;
+                -webkit-line-clamp: none !important;
+                line-clamp: none !important;
                 overflow-x: visible !important;
                 overflow-y: visible !important;
             }
