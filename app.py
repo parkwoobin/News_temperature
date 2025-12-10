@@ -2123,26 +2123,46 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             date_from = (datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d')
             
             # crawl_news_with_full_text 사용 (본문 추출 + 요약)
+            # 본문 추출 실패해도 description으로 요약하도록 include_full_text=True 사용
             results = crawler.crawl_news_with_full_text(
                 query=request.query,
-                max_results=safe_max_results,
+                max_results=safe_max_results * 2,  # 본문 추출 실패 대비하여 더 많이 수집
                 include_full_text=True,  # 본문 추출 활성화
                 date_from=date_from,
                 date_to=date_to,
                 sort_by=request.sort_by
             )
             
-            # 영어 뉴스 제외
+            # 영어 뉴스 제외 및 결과 정리
             if results:
                 filtered_results = []
                 for result in results:
                     title = result.get('title', '')
                     description = result.get('description', '')
                     text = result.get('text', '')
-                    if not crawler._is_english_article(title, description, text):
-                        filtered_results.append(result)
-                        if len(filtered_results) >= safe_max_results:
-                            break
+                    
+                    # 영어 뉴스 제외
+                    if crawler._is_english_article(title, description, text):
+                        continue
+                    
+                    # 본문 추출 실패한 경우 description으로 요약 생성
+                    if not result.get('text') and description:
+                        print(f"[API] 본문 추출 실패, description으로 요약 생성: {title[:50]}")
+                        try:
+                            result['text'] = crawler.summarize_text(description)
+                            result['full_text'] = description  # 감정 분석용으로 description 사용
+                        except Exception as e:
+                            print(f"[API] 요약 생성 실패: {e}")
+                            result['text'] = description  # 요약 실패 시 description 그대로 사용
+                            result['full_text'] = description
+                    
+                    # text가 없으면 description 사용
+                    if not result.get('text'):
+                        result['text'] = description or ''
+                    
+                    filtered_results.append(result)
+                    if len(filtered_results) >= safe_max_results:
+                        break
                 results = filtered_results
             print(f"[API] 뉴스 검색 완료: {len(results)}개 결과")
         except Exception as e:
