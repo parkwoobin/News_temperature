@@ -2072,16 +2072,10 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             summary_mode = 'openai'
             use_openai_sentiment = True
         else:  # 'local'
-            # 로컬 모델 사용 시 메모리 부족으로 크래시 가능성이 있으므로
-            # 일단 OpenAI 모드로 폴백 (사용자가 OpenAI 키를 제공한 경우)
-            if request.openai_api_key:
-                print("[API] 로컬 모델 모드이지만 OpenAI 키가 제공되어 OpenAI 모드로 전환")
-                summary_mode = 'openai'
-                use_openai_sentiment = True
-            else:
-                # OpenAI 키가 없으면 로컬 모델 시도 (크래시 가능성 있음)
-                summary_mode = 'kosum-v1-tuned'
-                use_openai_sentiment = False
+            # 로컬 모델 모드: 로컬 모델 사용 (8GB 플랜이므로 가능)
+            print("[API] 로컬 모델 모드 선택됨")
+            summary_mode = 'kosum-v1-tuned'  # 로컬 요약 모델 사용
+            use_openai_sentiment = False  # 로컬 감정 분석 모델 사용
         
         print(f"[API] 모델 모드: summary_mode={summary_mode}, use_openai_sentiment={use_openai_sentiment}")
         
