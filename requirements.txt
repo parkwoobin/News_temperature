@@ -28,3 +28,6 @@ Pillow>=10.0.0
 
 # OpenAI API (선택사항)
 openai>=1.0.0
+
+# NumPy 버전 호환성 (NumPy 2.x는 일부 라이브러리와 호환되지 않음)
+numpy<2.0.0
