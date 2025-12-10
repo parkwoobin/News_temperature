@@ -327,9 +327,16 @@ class NaverNewsAPICrawler:
             self.kosum_tuned_device = "cuda" if torch.cuda.is_available() else "cpu"
             
             # kosum-v1-tuned 모델 로드
-            # 실제 모델 이름은 사용자가 제공한 이름으로 변경 가능
-            # 예: "nlpai-lab/kosmos-2-patch14-224" 또는 다른 tuned 모델
-            model_name = "gogamza/kobart-summarization"  # 기본 모델 (tuned 모델 이름으로 변경 필요)
+            # 로컬 모델 경로 확인
+            local_model_path = "./kosum-v1-tuned"
+            if os.path.exists(local_model_path) and os.path.isdir(local_model_path):
+                # 로컬 모델이 있으면 로컬 모델 사용
+                model_name = local_model_path
+                print(f"로컬 kosum-v1-tuned 모델 발견: {local_model_path}")
+            else:
+                # 로컬 모델이 없으면 Hugging Face에서 기본 모델 다운로드
+                model_name = "gogamza/kobart-summarization"
+                print(f"로컬 모델 없음, Hugging Face 모델 사용: {model_name}")
             
             print(f"kosum-v1-tuned 모델 로드 중... (디바이스: {self.kosum_tuned_device})")
             self.kosum_tuned_tokenizer = AutoTokenizer.from_pretrained(model_name)
