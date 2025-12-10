@@ -1486,11 +1486,16 @@ class NaverNewsAPICrawler:
                     # 성공한 기사만 결과에 추가
                     results.append(result)
                 else:
-                    # 본문 추출 실패 시 해당 기사는 건너뛰고 다음 기사로
-                    # (이미 충분한 수를 확보했으면 중단)
-                    if len(results) >= max_results:
-                        break
-                    continue  # 실패한 기사는 결과에 포함하지 않음
+                    # 본문 추출 실패 시 description으로 요약 생성
+                    description = result.get('description', '')
+                    if description:
+                        result['text'] = self.summarize_text(description)
+                        result['full_text'] = description  # 감정 분석용으로 description 사용
+                    else:
+                        result['text'] = ''
+                        result['full_text'] = ''
+                    # 본문 추출 실패해도 결과에 포함 (description으로 요약)
+                    results.append(result)
                 time.sleep(self.delay)  # 본문 추출 시 추가 대기
             else:
                 # 본문 추출을 하지 않아도 description을 요약
