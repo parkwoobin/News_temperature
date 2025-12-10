@@ -2086,44 +2086,27 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
         print(f"[API] 모델 모드: summary_mode={summary_mode}, use_openai_sentiment={use_openai_sentiment}")
         
         # 세션에서 Client ID와 Secret 가져오기
+        print("[API] NaverNewsAPICrawler 초기화 시작...")
         try:
+            # 항상 OpenAI 모드로 초기화 (가장 안전)
             crawler = NaverNewsAPICrawler(
                 client_id=session["client_id"],
                 client_secret=session["client_secret"],
                 delay=0.1,
-                openai_api_key=request.openai_api_key if summary_mode == 'openai' else None,
-                summary_mode=summary_mode
+                openai_api_key=request.openai_api_key if request.openai_api_key else None,
+                summary_mode='openai'  # 항상 OpenAI 모드 (로컬 모델 로딩 방지)
             )
             print("[API] NaverNewsAPICrawler 초기화 완료")
         except Exception as e:
-            print(f"[API] NaverNewsAPICrawler 초기화 실패: {e}")
+            print(f"[API] ❌ NaverNewsAPICrawler 초기화 실패: {e}")
             import traceback
-            traceback.print_exc()
-            # 로컬 모델 실패 시 OpenAI 모드로 재시도
-            if summary_mode != 'openai' and request.openai_api_key:
-                print("[API] 로컬 모델 실패, OpenAI 모드로 재시도")
-                try:
-                    crawler = NaverNewsAPICrawler(
-                        client_id=session["client_id"],
-                        client_secret=session["client_secret"],
-                        delay=0.1,
-                        openai_api_key=request.openai_api_key,
-                        summary_mode='openai'
-                    )
-                    summary_mode = 'openai'
-                    use_openai_sentiment = True
-                    print("[API] OpenAI 모드로 재시도 성공")
-                except Exception as e2:
-                    print(f"[API] OpenAI 모드 재시도도 실패: {e2}")
-                    return JSONResponse({
-                        "success": False,
-                        "error": f"크롤러 초기화 실패: {str(e)} (OpenAI 재시도도 실패: {str(e2)})"
-                    }, status_code=500)
-            else:
-                return JSONResponse({
-                    "success": False,
-                    "error": f"크롤러 초기화 실패: {str(e)}"
-                }, status_code=500)
+            error_trace = traceback.format_exc()
+            print(f"[API] 상세 에러:\n{error_trace}")
+            return JSONResponse({
+                "success": False,
+                "error": f"크롤러 초기화 실패: {str(e)}",
+                "detail": error_trace
+            }, status_code=500)
         
         # 뉴스 검색
         print(f"[API] 뉴스 검색 시작...")
