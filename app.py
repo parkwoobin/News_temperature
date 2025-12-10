@@ -1131,7 +1131,7 @@ async def home(request: Request):
                                 if (item.pubDate) {
                                     html += '<span>' + escapeHtml(item.pubDate) + '</span>';
                                 }
-                                if (item.view_count !== undefined) {
+                                if (item.view_count !== undefined && item.view_count !== null && item.view_count > 0) {
                                     html += '<span>' + item.view_count.toLocaleString() + '회 조회</span>';
                                 }
                                 html += '</div>';

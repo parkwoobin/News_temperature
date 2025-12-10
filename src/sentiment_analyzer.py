@@ -298,13 +298,13 @@ class SentimentAnalyzer:
                 temperature = int(score * 100)
                 temperature = max(0, min(100, temperature))
                 
-                # 이미지 경로 결정
+                # 이미지 경로 결정 (static 폴더 사용)
                 if label == '긍정적':
-                    image_filename = 'temp/3.png'
+                    image_filename = 'static/3.png'
                 elif label == '부정적':
-                    image_filename = 'temp/1.png'
+                    image_filename = 'static/1.png'
                 else:
-                    image_filename = 'temp/2.png'
+                    image_filename = 'static/2.png'
                 
                 print(f"[감정 분석] 최종 결과: {label}, 점수: {score:.3f}, 온도: {temperature}도, 이미지: {image_filename}")
                 
@@ -324,7 +324,7 @@ class SentimentAnalyzer:
                 'label': '보통',
                 'score': 0.5,
                 'temperature': 50,
-                'image_path': 'temp/2.png'
+                'image_path': 'static/2.png'
             }
         
         # 전체 본문이 너무 길면 앞부분과 뒷부분을 결합하여 사용
@@ -563,7 +563,7 @@ class SentimentAnalyzer:
                 if strong_negative_count > 0:
                     print(f"[강한 부정 감지] 강한 부정 키워드 {strong_negative_count}개 감지 - 강제 부정 분류")
                     sentiment = '부정적'
-                    image_filename = 'temp/1.png'
+                    image_filename = 'static/1.png'
                     # 강한 부정 키워드가 있으면 점수를 매우 낮게 설정 (0.0~0.2)
                     adjusted_score = max(0.0, 0.2 - (strong_negative_count * 0.1))
                     temperature = int(adjusted_score * 100)
@@ -595,28 +595,28 @@ class SentimentAnalyzer:
                 # 보정된 점수 기반으로 감정 재판단
                 if adjusted_score >= 0.65:  # 긍정 기준
                     sentiment = '긍정적'
-                    image_filename = 'temp/3.png'
+                    image_filename = 'static/3.png'
                 elif adjusted_score <= 0.35:  # 부정 기준
                     sentiment = '부정적'
-                    image_filename = 'temp/1.png'
+                    image_filename = 'static/1.png'
                 else:
                     # 키워드가 강하면 키워드 우선
                     if positive_count >= 2 and positive_count > negative_count:
                         sentiment = '긍정적'
-                        image_filename = 'temp/3.png'
+                        image_filename = 'static/3.png'
                         adjusted_score = min(1.0, 0.65 + (positive_count * 0.1))
                     elif negative_count >= 2 and negative_count > positive_count:
                         sentiment = '부정적'
-                        image_filename = 'temp/1.png'
+                        image_filename = 'static/1.png'
                         adjusted_score = max(0.0, 0.35 - (negative_count * 0.1))
                     else:
                         sentiment = label  # 모델 예측 유지
                         if sentiment == '긍정적':
-                            image_filename = 'temp/3.png'
+                            image_filename = 'static/3.png'
                         elif sentiment == '부정적':
-                            image_filename = 'temp/1.png'
+                            image_filename = 'static/1.png'
                         else:
-                            image_filename = 'temp/2.png'
+                            image_filename = 'static/2.png'
                 
                 # 온도 계산: 보정된 점수를 0~100도 범위로 변환
                 temperature = int(adjusted_score * 100)
@@ -684,10 +684,10 @@ class SentimentAnalyzer:
                     adjusted_score = min(1.0, score + keyword_bias)
                     if adjusted_score >= 0.7:  # 긍정 기준을 0.5에서 0.7로 상향 조정
                         sentiment = '긍정적'
-                        image_filename = 'temp/3.png'
+                        image_filename = 'static/3.png'
                     elif adjusted_score <= 0.3:  # 부정 기준도 명확히 설정
                         sentiment = '부정적'
-                        image_filename = 'temp/1.png'
+                        image_filename = 'static/1.png'
                     else:
                         sentiment = '보통'
                         image_filename = 'temp/2.png'
@@ -696,10 +696,10 @@ class SentimentAnalyzer:
                     adjusted_score = max(0.0, score - abs(keyword_bias))
                     if adjusted_score <= 0.3:
                         sentiment = '부정적'
-                        image_filename = 'temp/1.png'
+                        image_filename = 'static/1.png'
                     elif adjusted_score >= 0.7:
                         sentiment = '긍정적'
-                        image_filename = 'temp/3.png'
+                        image_filename = 'static/3.png'
                     else:
                         sentiment = '보통'
                         image_filename = 'temp/2.png'
@@ -709,25 +709,25 @@ class SentimentAnalyzer:
                     final_score = score + keyword_bias
                     if positive_count > negative_count and positive_count > 2:  # 긍정 키워드가 2개 이상일 때만 긍정 판단
                         sentiment = '긍정적'
-                        image_filename = 'temp/3.png'
+                        image_filename = 'static/3.png'
                         # 키워드 기반 점수 계산 (0.7~1.0 범위)
                         final_score = min(1.0, 0.7 + (min(positive_count, 5) * 0.06))
                     elif negative_count > positive_count and negative_count > 0:
                         sentiment = '부정적'
-                        image_filename = 'temp/1.png'
+                        image_filename = 'static/1.png'
                         # 키워드 기반 점수 계산 (0.0~0.3 범위)
                         final_score = max(0.0, 0.3 - (min(negative_count, 5) * 0.06))
                     else:
                         # 키워드가 없거나 균형인 경우 score 기반 판단
                         if final_score >= 0.7:  # 긍정 기준 상향
                             sentiment = '긍정적'
-                            image_filename = 'temp/3.png'
+                            image_filename = 'static/3.png'
                         elif final_score <= 0.3:  # 부정 기준 하향
                             sentiment = '부정적'
-                            image_filename = 'temp/1.png'
+                            image_filename = 'static/1.png'
                         else:
                             sentiment = '보통'
-                            image_filename = 'temp/2.png'
+                            image_filename = 'static/2.png'
                 
                 # 점수와 온도를 같게 설정 (score * 100)
                 temperature = int(score * 100)
@@ -759,7 +759,7 @@ class SentimentAnalyzer:
                 'label': '보통',
                 'score': 0.5,
                 'temperature': 50,
-                'image_path': 'temp/2.png'
+                'image_path': 'static/2.png'
             }
     
     def _create_sentiment_image(self, sentiment: str, temperature: int, image_path: str):
