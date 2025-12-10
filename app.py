@@ -734,7 +734,7 @@ async def home(request: Request):
         <div class="header">
             <div class="header-content">
                 <h1>
-                    <img src="/temp/logo.png" alt="뉴스 온도계" class="logo-icon" />
+                    <img src="/static/logo.png" alt="뉴스 온도계" class="logo-icon" />
                     뉴스 온도계
                 </h1>
                 <div class="user-info">
@@ -1806,7 +1806,7 @@ async def login_page(request: Request):
             <!-- 왼쪽 섹션: 설명 -->
             <div class="left-section">
                 <h1>
-                    <img src="/temp/logo.png" alt="뉴스 온도계" class="logo-icon-large" />
+                    <img src="/static/logo.png" alt="뉴스 온도계" class="logo-icon-large" />
                     뉴스 온도계
                 </h1>
                 <p class="subtitle">
