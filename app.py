@@ -73,7 +73,7 @@ class TestRequest(BaseModel):
     days: int = 1
     include_full_text: bool = True
     sort_by: str = 'date'  # 'date': 날짜순, 'view': 조회수순
-    model_mode: str = 'local'  # 'local': 로컬 모델 사용, 'openai': OpenAI API 사용
+    model_mode: str = 'openai'  # 'local': 로컬 모델 사용, 'openai': OpenAI API 사용 (기본값: openai)
     openai_api_key: Optional[str] = None  # OpenAI API 키 (model_mode가 'openai'일 때 필요)
 
 
@@ -802,11 +802,11 @@ async def home(request: Request):
                         <label>모델 선택</label>
                         <div class="radio-group">
                             <label>
-                                <input type="radio" name="model_mode" value="local" checked>
+                                <input type="radio" name="model_mode" value="local">
                                 <span>로컬 모델 - 정확도 낮음</span>
                             </label>
                             <label>
-                                <input type="radio" name="model_mode" value="openai">
+                                <input type="radio" name="model_mode" value="openai" checked>
                                 <span>OpenAI API - 정확도 높음</span>
                             </label>
                         </div>
@@ -1043,7 +1043,7 @@ async def home(request: Request):
                 }
                 
                 var modelModeRadio = document.querySelector('input[name="model_mode"]:checked');
-                var modelMode = modelModeRadio ? modelModeRadio.value : 'local';
+                var modelMode = modelModeRadio ? modelModeRadio.value : 'openai';
                 
                 // OpenAI API 키가 필요한 경우 확인
                 var needsOpenAIKey = (modelMode === 'openai');
