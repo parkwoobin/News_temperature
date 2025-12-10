@@ -2126,11 +2126,18 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 }, status_code=500)
         
         # 뉴스 검색
+        print(f"[API] 뉴스 검색 시작...")
+        print(f"[API] 검색 파라미터: query={request.query}, max_results={request.max_results}, days={request.days}")
         try:
+            # Railway 타임아웃 방지를 위해 max_results 제한
+            safe_max_results = min(request.max_results, 5)  # 최대 5개로 제한
+            if request.max_results > 5:
+                print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (타임아웃 방지)")
+            
             results = crawler.get_recent_news(
                 query=request.query,
                 days=request.days,
-                max_results=request.max_results,
+                max_results=safe_max_results,
                 sort_by=request.sort_by,
                 exclude_english=True  # 항상 영어 뉴스 제외
             )
