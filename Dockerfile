@@ -56,11 +56,14 @@ EXPOSE 8000
 
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
 
-# 헬스체크 추가
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
+# Railway는 PORT 환경 변수를 자동으로 설정함
+# PORT 환경 변수가 없으면 기본값 8000 사용
+ENV PORT=${PORT:-8000}
+
+# 헬스체크 추가 (Railway가 자동으로 헬스체크 수행)
+# HEALTHCHECK는 Railway에서 무시되므로 제거
 
 # 서버 실행 (프로덕션 모드)
-CMD sh -c "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"
+# Railway의 PORT 환경 변수 사용
+CMD uvicorn app:app --host 0.0.0.0 --port ${PORT} --workers 1
