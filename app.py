@@ -2130,17 +2130,33 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
         print(f"[API] 검색 파라미터: query={request.query}, max_results={request.max_results}, days={request.days}")
         try:
             # Railway 타임아웃 방지를 위해 max_results 제한
-            safe_max_results = min(request.max_results, 5)  # 최대 5개로 제한
-            if request.max_results > 5:
+            safe_max_results = min(request.max_results, 3)  # 최대 3개로 제한 (더 안전하게)
+            if request.max_results > 3:
                 print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (타임아웃 방지)")
             
-            results = crawler.get_recent_news(
+            # 본문 추출 없이 먼저 시도 (더 빠름)
+            # include_full_text=False로 빠른 검색
+            print(f"[API] 빠른 검색 모드로 시도 (본문 추출 없음)")
+            results = crawler.crawl_news_with_full_text(
                 query=request.query,
-                days=request.days,
                 max_results=safe_max_results,
-                sort_by=request.sort_by,
-                exclude_english=True  # 항상 영어 뉴스 제외
+                include_full_text=False,  # 본문 추출 생략 (타임아웃 방지)
+                date_from=(datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d'),
+                date_to=datetime.now().strftime('%Y%m%d'),
+                sort_by=request.sort_by
             )
+            
+            # 영어 뉴스 제외
+            if results:
+                filtered_results = []
+                for result in results:
+                    title = result.get('title', '')
+                    description = result.get('description', '')
+                    if not crawler._is_english_article(title, description, ''):
+                        filtered_results.append(result)
+                        if len(filtered_results) >= safe_max_results:
+                            break
+                results = filtered_results
             print(f"[API] 뉴스 검색 완료: {len(results)}개 결과")
         except Exception as e:
             print(f"[API] 뉴스 검색 실패: {e}")
