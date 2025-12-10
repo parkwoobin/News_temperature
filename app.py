@@ -2112,10 +2112,10 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
         print(f"[API] 뉴스 검색 시작...")
         print(f"[API] 검색 파라미터: query={request.query}, max_results={request.max_results}, days={request.days}")
         try:
-            # Railway 타임아웃 방지를 위해 max_results 제한 (안정적으로 작동하니 10개로 증가)
-            safe_max_results = min(request.max_results, 10)  # 최대 10개로 제한
-            if request.max_results > 10:
-                print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (타임아웃 방지)")
+            # Railway 타임아웃 방지를 위해 max_results 제한 (메모리 부족 방지를 위해 5개로 제한)
+            safe_max_results = min(request.max_results, 5)  # 최대 5개로 제한 (메모리 부족 방지)
+            if request.max_results > 5:
+                print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (메모리 부족 방지)")
             
             # 본문 추출과 요약 기능 활성화
             print(f"[API] 본문 추출 및 요약 기능 활성화")
