@@ -2088,7 +2088,7 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 client_id=session["client_id"],
                 client_secret=session["client_secret"],
                 delay=0.1,
-                openai_api_key=request.openai_api_key if request.model_mode == 'openai' else None,
+                openai_api_key=request.openai_api_key if summary_mode == 'openai' else None,
                 summary_mode=summary_mode
             )
             print("[API] NaverNewsAPICrawler 초기화 완료")
@@ -2096,10 +2096,31 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             print(f"[API] NaverNewsAPICrawler 초기화 실패: {e}")
             import traceback
             traceback.print_exc()
-            return JSONResponse({
-                "success": False,
-                "error": f"크롤러 초기화 실패: {str(e)}"
-            }, status_code=500)
+            # 로컬 모델 실패 시 OpenAI 모드로 재시도
+            if summary_mode != 'openai' and request.openai_api_key:
+                print("[API] 로컬 모델 실패, OpenAI 모드로 재시도")
+                try:
+                    crawler = NaverNewsAPICrawler(
+                        client_id=session["client_id"],
+                        client_secret=session["client_secret"],
+                        delay=0.1,
+                        openai_api_key=request.openai_api_key,
+                        summary_mode='openai'
+                    )
+                    summary_mode = 'openai'
+                    use_openai_sentiment = True
+                    print("[API] OpenAI 모드로 재시도 성공")
+                except Exception as e2:
+                    print(f"[API] OpenAI 모드 재시도도 실패: {e2}")
+                    return JSONResponse({
+                        "success": False,
+                        "error": f"크롤러 초기화 실패: {str(e)} (OpenAI 재시도도 실패: {str(e2)})"
+                    }, status_code=500)
+            else:
+                return JSONResponse({
+                    "success": False,
+                    "error": f"크롤러 초기화 실패: {str(e)}"
+                }, status_code=500)
         
         # 뉴스 검색
         try:
