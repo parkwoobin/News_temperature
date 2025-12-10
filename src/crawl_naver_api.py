@@ -1498,12 +1498,16 @@ class NaverNewsAPICrawler:
                     results.append(result)
                 time.sleep(self.delay)  # 본문 추출 시 추가 대기
             else:
-                # 본문 추출을 하지 않아도 description을 요약
+                # 본문 추출을 하지 않으면 description을 그대로 사용 (요약 생략하여 속도 향상)
+                # 타임아웃 방지를 위해 요약 생성을 생략하고 description을 그대로 사용
                 description = result.get('description', '')
                 if description:
-                    result['text'] = self.summarize_text(description)
+                    # 요약 생성을 생략하고 description을 그대로 사용 (타임아웃 방지)
+                    result['text'] = description
+                    result['full_text'] = description  # 감정 분석용으로도 description 사용
                 else:
                     result['text'] = ''
+                    result['full_text'] = ''
                 results.append(result)
             
             # 이미 충분한 수를 확보했으면 중단

@@ -2172,7 +2172,7 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 "error": f"뉴스 검색 실패: {str(e)}"
             }, status_code=500)
         
-        # 감정 분석 수행 (OpenAI 모드만 사용)
+        # 감정 분석 수행 (OpenAI 모드만 사용, 타임아웃 방지를 위해 최대 3개만 처리)
         print("[API] 감정 분석 시작...")
         try:
             if use_openai_sentiment and request.openai_api_key:
@@ -2182,18 +2182,31 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 )
                 if analyzer:
                     print("[API] OpenAI 감정 분석기 준비 완료")
-                    for idx, result in enumerate(results):
+                    # 타임아웃 방지를 위해 최대 3개만 감정 분석 수행
+                    max_sentiment_results = min(len(results), 3)
+                    print(f"[API] 감정 분석 대상: {max_sentiment_results}개 (타임아웃 방지)")
+                    
+                    for idx, result in enumerate(results[:max_sentiment_results]):
                         # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
                         text_for_analysis = result.get('full_text') or result.get('text', '') or result.get('description', '')
                         if text_for_analysis:
+                            print(f"[API] 감정 분석 시작 (기사 {idx + 1}): 텍스트 길이={len(text_for_analysis)}자")
                             try:
                                 # OpenAI로 감정 분석 수행
                                 sentiment_result = analyzer.analyze(text_for_analysis, article_id=idx + 1)
                                 result['sentiment'] = sentiment_result
-                                print(f"[API] 감정 분석 완료 (기사 {idx + 1})")
+                                print(f"[API] ✅ 감정 분석 완료 (기사 {idx + 1}): {sentiment_result.get('label', 'N/A')}, 온도={sentiment_result.get('temperature', 'N/A')}도")
                             except Exception as e:
-                                print(f"[API] 감정 분석 오류 (기사 {idx + 1}): {e}")
+                                print(f"[API] ❌ 감정 분석 오류 (기사 {idx + 1}): {e}")
+                                import traceback
+                                traceback.print_exc()
                                 # 감정 분석 실패 시 sentiment 필드 없이 진행
+                        else:
+                            print(f"[API] ⚠️ 감정 분석 생략 (기사 {idx + 1}): 분석할 텍스트 없음")
+                    
+                    # 나머지 기사는 감정 분석 생략
+                    if len(results) > max_sentiment_results:
+                        print(f"[API] ⚠️ 나머지 {len(results) - max_sentiment_results}개 기사는 감정 분석 생략 (타임아웃 방지)")
                 else:
                     print("[API] 감정 분석기 사용 불가 (None 반환)")
             else:
