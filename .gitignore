@@ -19,16 +19,11 @@ env/
 .DS_Store
 Thumbs.db
 
-# Model files (large files) - excluded from Git
-*.safetensors
-*.pt
-*.pth
-*.bin
-kosum-v1-tuned/model.safetensors
-sentiment_model/**/*.safetensors
-sentiment_model/**/*.pt
-sentiment_model/**/*.pth
-sentiment_model/**/*.bin
+# Model files (large files) - using Git LFS instead of excluding
+# *.safetensors  # Git LFS로 관리
+# *.pt  # Git LFS로 관리
+# *.pth  # Git LFS로 관리
+# *.bin  # Git LFS로 관리
 
 # Temporary files
 temp/
