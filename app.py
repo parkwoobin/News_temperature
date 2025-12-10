@@ -2088,13 +2088,13 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
         # 세션에서 Client ID와 Secret 가져오기
         print("[API] NaverNewsAPICrawler 초기화 시작...")
         try:
-            # 항상 OpenAI 모드로 초기화 (가장 안전)
+            # 설정된 summary_mode 사용 (로컬 모드일 때도 로컬 모델 사용)
             crawler = NaverNewsAPICrawler(
                 client_id=session["client_id"],
                 client_secret=session["client_secret"],
                 delay=0.1,
                 openai_api_key=request.openai_api_key if request.openai_api_key else None,
-                summary_mode='openai'  # 항상 OpenAI 모드 (로컬 모델 로딩 방지)
+                summary_mode=summary_mode  # 설정된 모드 사용 (로컬 또는 OpenAI)
             )
             print("[API] NaverNewsAPICrawler 초기화 완료")
         except Exception as e:
@@ -2171,38 +2171,47 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 "error": f"뉴스 검색 실패: {str(e)}"
             }, status_code=500)
         
-        # 감정 분석 수행 (OpenAI 모드만 사용, 8GB 플랜이므로 모든 기사 처리)
+        # 감정 분석 수행 (로컬 모델 또는 OpenAI 모드, 8GB 플랜이므로 모든 기사 처리)
         print("[API] 감정 분석 시작...")
         try:
+            # 로컬 모델 또는 OpenAI 모드에 따라 감정 분석기 초기화
             if use_openai_sentiment and request.openai_api_key:
+                # OpenAI 모드
                 analyzer = get_sentiment_analyzer(
                     openai_api_key=request.openai_api_key,
                     use_openai=True
                 )
-                if analyzer:
-                    print("[API] OpenAI 감정 분석기 준비 완료 (8GB 플랜: 모든 기사 처리)")
-                    # 8GB 플랜이므로 모든 기사에 대해 감정 분석 수행
-                    for idx, result in enumerate(results):
-                        # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
-                        text_for_analysis = result.get('full_text') or result.get('text', '') or result.get('description', '')
-                        if text_for_analysis:
-                            print(f"[API] 감정 분석 시작 (기사 {idx + 1}/{len(results)}): 텍스트 길이={len(text_for_analysis)}자")
-                            try:
-                                # OpenAI로 감정 분석 수행
-                                sentiment_result = analyzer.analyze(text_for_analysis, article_id=idx + 1)
-                                result['sentiment'] = sentiment_result
-                                print(f"[API] ✅ 감정 분석 완료 (기사 {idx + 1}): {sentiment_result.get('label', 'N/A')}, 온도={sentiment_result.get('temperature', 'N/A')}도")
-                            except Exception as e:
-                                print(f"[API] ❌ 감정 분석 오류 (기사 {idx + 1}): {e}")
-                                import traceback
-                                traceback.print_exc()
-                                # 감정 분석 실패 시 sentiment 필드 없이 진행
-                        else:
-                            print(f"[API] ⚠️ 감정 분석 생략 (기사 {idx + 1}): 분석할 텍스트 없음")
-                else:
-                    print("[API] 감정 분석기 사용 불가 (None 반환)")
+                analyzer_type = "OpenAI"
             else:
-                print("[API] 감정 분석 생략 (OpenAI 키 없음 또는 로컬 모드)")
+                # 로컬 모델 모드
+                analyzer = get_sentiment_analyzer(
+                    openai_api_key=None,
+                    use_openai=False
+                )
+                analyzer_type = "로컬"
+            
+            if analyzer:
+                print(f"[API] {analyzer_type} 감정 분석기 준비 완료 (8GB 플랜: 모든 기사 처리)")
+                # 8GB 플랜이므로 모든 기사에 대해 감정 분석 수행
+                for idx, result in enumerate(results):
+                    # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
+                    text_for_analysis = result.get('full_text') or result.get('text', '') or result.get('description', '')
+                    if text_for_analysis:
+                        print(f"[API] 감정 분석 시작 (기사 {idx + 1}/{len(results)}): 텍스트 길이={len(text_for_analysis)}자")
+                        try:
+                            # 감정 분석 수행 (로컬 또는 OpenAI)
+                            sentiment_result = analyzer.analyze(text_for_analysis, article_id=idx + 1)
+                            result['sentiment'] = sentiment_result
+                            print(f"[API] ✅ 감정 분석 완료 (기사 {idx + 1}): {sentiment_result.get('label', 'N/A')}, 온도={sentiment_result.get('temperature', 'N/A')}도")
+                        except Exception as e:
+                            print(f"[API] ❌ 감정 분석 오류 (기사 {idx + 1}): {e}")
+                            import traceback
+                            traceback.print_exc()
+                            # 감정 분석 실패 시 sentiment 필드 없이 진행
+                    else:
+                        print(f"[API] ⚠️ 감정 분석 생략 (기사 {idx + 1}): 분석할 텍스트 없음")
+            else:
+                print(f"[API] 감정 분석기 사용 불가 (None 반환, 모드: {analyzer_type})")
         except Exception as e:
             print(f"[API] 감정 분석기 초기화 실패: {e}")
             import traceback
