@@ -2165,7 +2165,8 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                 if analyzer:
                     print("[API] OpenAI 감정 분석기 준비 완료")
                     for idx, result in enumerate(results):
-                        text_for_analysis = result.get('text', '') or result.get('description', '')
+                        # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
+                        text_for_analysis = result.get('full_text') or result.get('text', '') or result.get('description', '')
                         if text_for_analysis:
                             try:
                                 # OpenAI로 감정 분석 수행
