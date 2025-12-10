@@ -2060,6 +2060,8 @@ async def logout(request: Request):
 async def test_api(request: TestRequest, session: dict = Depends(require_login)):
     """뉴스 검색 및 분석 API 엔드포인트"""
     try:
+        print(f"[API] /api/test 요청 받음: query={request.query}, model_mode={request.model_mode}")
+        
         # 모델 모드에 따라 요약 모드와 감정 분석 모드 결정
         if request.model_mode == 'openai':
             summary_mode = 'openai'
@@ -2068,48 +2070,79 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             summary_mode = 'kosum-v1-tuned'
             use_openai_sentiment = False
         
+        print(f"[API] 모델 모드: summary_mode={summary_mode}, use_openai_sentiment={use_openai_sentiment}")
+        
         # 세션에서 Client ID와 Secret 가져오기
-        crawler = NaverNewsAPICrawler(
-            client_id=session["client_id"],
-            client_secret=session["client_secret"],
-            delay=0.1,
-            openai_api_key=request.openai_api_key if request.model_mode == 'openai' else None,
-            summary_mode=summary_mode
-        )
+        try:
+            crawler = NaverNewsAPICrawler(
+                client_id=session["client_id"],
+                client_secret=session["client_secret"],
+                delay=0.1,
+                openai_api_key=request.openai_api_key if request.model_mode == 'openai' else None,
+                summary_mode=summary_mode
+            )
+            print("[API] NaverNewsAPICrawler 초기화 완료")
+        except Exception as e:
+            print(f"[API] NaverNewsAPICrawler 초기화 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            return JSONResponse({
+                "success": False,
+                "error": f"크롤러 초기화 실패: {str(e)}"
+            }, status_code=500)
         
-        results = crawler.get_recent_news(
-            query=request.query,
-            days=request.days,
-            max_results=request.max_results,
-            sort_by=request.sort_by,
-            exclude_english=True  # 항상 영어 뉴스 제외
-        )
-        
-        # 항상 본문 전체 추출 (include_full_text는 항상 True)
+        # 뉴스 검색
+        try:
+            results = crawler.get_recent_news(
+                query=request.query,
+                days=request.days,
+                max_results=request.max_results,
+                sort_by=request.sort_by,
+                exclude_english=True  # 항상 영어 뉴스 제외
+            )
+            print(f"[API] 뉴스 검색 완료: {len(results)}개 결과")
+        except Exception as e:
+            print(f"[API] 뉴스 검색 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            return JSONResponse({
+                "success": False,
+                "error": f"뉴스 검색 실패: {str(e)}"
+            }, status_code=500)
         
         # 감정 분석 수행 (오류가 발생해도 뉴스는 표시)
-        analyzer = get_sentiment_analyzer(
-            openai_api_key=request.openai_api_key if use_openai_sentiment else None,
-            use_openai=use_openai_sentiment
-        )
-        if analyzer:
-            for idx, result in enumerate(results):
-                # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
-                text_for_analysis = result.get('full_text') or result.get('text', '')
-                
-                if text_for_analysis:
-                    try:
-                        # 전체 본문으로 감정 분석 수행
-                        sentiment_result = analyzer.analyze(text_for_analysis, article_id=idx + 1)
-                        result['sentiment'] = sentiment_result
-                        mode_str = 'OpenAI API' if use_openai_sentiment else '로컬 모델 (파인튜닝된 감정 분석 모델)'
-                        print(f"[감정 분석] 기사 {idx + 1}: {mode_str} 사용, {'전체 본문' if result.get('full_text') else '요약본'} 사용 ({len(text_for_analysis)}자)")
-                    except Exception as e:
-                        print(f"감정 분석 오류 (기사 {idx + 1}): {e}")
-                        # 감정 분석 실패 시 sentiment 필드 없이 진행
-                        import traceback
-                        traceback.print_exc()
+        try:
+            analyzer = get_sentiment_analyzer(
+                openai_api_key=request.openai_api_key if use_openai_sentiment else None,
+                use_openai=use_openai_sentiment
+            )
+            if analyzer:
+                print("[API] 감정 분석기 준비 완료")
+                for idx, result in enumerate(results):
+                    # 전체 본문이 있으면 전체 본문 사용, 없으면 요약본 사용
+                    text_for_analysis = result.get('full_text') or result.get('text', '')
+                    
+                    if text_for_analysis:
+                        try:
+                            # 전체 본문으로 감정 분석 수행
+                            sentiment_result = analyzer.analyze(text_for_analysis, article_id=idx + 1)
+                            result['sentiment'] = sentiment_result
+                            mode_str = 'OpenAI API' if use_openai_sentiment else '로컬 모델'
+                            print(f"[API] 감정 분석 완료 (기사 {idx + 1}): {mode_str}")
+                        except Exception as e:
+                            print(f"[API] 감정 분석 오류 (기사 {idx + 1}): {e}")
+                            # 감정 분석 실패 시 sentiment 필드 없이 진행
+                            import traceback
+                            traceback.print_exc()
+            else:
+                print("[API] 감정 분석기 사용 불가 (None 반환)")
+        except Exception as e:
+            print(f"[API] 감정 분석기 초기화 실패: {e}")
+            import traceback
+            traceback.print_exc()
+            # 감정 분석 실패해도 뉴스는 반환
         
+        print(f"[API] 응답 반환: {len(results)}개 결과")
         return JSONResponse({
             "success": True,
             "data": results,
@@ -2119,8 +2152,8 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
     except Exception as e:
         import traceback
         error_detail = traceback.format_exc()
-        print(f"API 오류 발생: {str(e)}")
-        print(f"상세 오류:\n{error_detail}")
+        print(f"[API] 예외 발생: {str(e)}")
+        print(f"[API] 상세 오류:\n{error_detail}")
         return JSONResponse({
             "success": False,
             "error": str(e),
