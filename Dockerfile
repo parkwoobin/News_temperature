@@ -1,20 +1,35 @@
-# Python 3.11 기반 이미지 사용
-FROM python:3.11-slim
+# 멀티 스테이지 빌드로 이미지 크기 최적화
+# Stage 1: 빌드 스테이지
+FROM python:3.11-slim as builder
 
-# 작업 디렉토리 설정
 WORKDIR /app
 
-# 시스템 패키지 업데이트 및 필요한 도구 설치
+# 빌드에 필요한 도구만 설치
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # requirements.txt 복사 및 의존성 설치
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: 런타임 스테이지 (최소한의 베이스 이미지)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 런타임에 필요한 최소한의 패키지만 설치
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 빌드 스테이지에서 설치한 패키지 복사
+COPY --from=builder /root/.local /root/.local
+
+# Python 경로 설정
+ENV PATH=/root/.local/bin:$PATH
 
 # 디렉토리 구조 생성
 RUN mkdir -p temp static kosum-v1-tuned sentiment_model sentiment_model/checkpoint-50 sentiment_model/checkpoint-73194
@@ -35,7 +50,6 @@ COPY sentiment_model/config.json sentiment_model/
 COPY sentiment_model/special_tokens_map.json sentiment_model/
 COPY sentiment_model/tokenizer.json sentiment_model/
 COPY sentiment_model/tokenizer_config.json sentiment_model/
-# training_args.bin은 선택적 (파일이 없을 수 있음)
 
 # 포트 노출
 EXPOSE 8000
