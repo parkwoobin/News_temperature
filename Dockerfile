@@ -51,19 +51,12 @@ COPY sentiment_model/special_tokens_map.json sentiment_model/
 COPY sentiment_model/tokenizer.json sentiment_model/
 COPY sentiment_model/tokenizer_config.json sentiment_model/
 
-# 포트 노출
+# 포트 노출 (Railway가 자동으로 PORT 설정)
 EXPOSE 8000
 
 # 환경 변수 설정
 ENV PYTHONUNBUFFERED=1
 
-# Railway는 PORT 환경 변수를 자동으로 설정함
-# PORT 환경 변수가 없으면 기본값 8000 사용
-ENV PORT=${PORT:-8000}
-
-# 헬스체크 추가 (Railway가 자동으로 헬스체크 수행)
-# HEALTHCHECK는 Railway에서 무시되므로 제거
-
 # 서버 실행 (프로덕션 모드)
-# Railway의 PORT 환경 변수 사용
-CMD uvicorn app:app --host 0.0.0.0 --port ${PORT} --workers 1
+# Railway의 PORT 환경 변수 사용 (Railway가 자동으로 설정)
+CMD python -c "import os; port = int(os.environ.get('PORT', 8000)); import uvicorn; uvicorn.run('app:app', host='0.0.0.0', port=port, workers=1)"
