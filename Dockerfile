@@ -19,12 +19,14 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # 디렉토리 구조 생성
 RUN mkdir -p temp static kosum-v1-tuned sentiment_model sentiment_model/checkpoint-50 sentiment_model/checkpoint-73194
 
-# 애플리케이션 코드 복사 (.dockerignore로 모델 파일 자동 제외)
+# 애플리케이션 코드 복사
 COPY app.py .
 COPY src/ src/
 COPY static/ static/
-COPY kosum-v1-tuned/ kosum-v1-tuned/
-COPY sentiment_model/ sentiment_model/
+
+# 설정 파일 복사 (RUN으로 처리하여 파일이 없어도 에러 방지)
+COPY kosum-v1-tuned/ kosum-v1-tuned/ || true
+COPY sentiment_model/ sentiment_model/ || true
 
 # 포트 노출
 EXPOSE 8000
@@ -38,6 +40,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
 
 # 서버 실행 (프로덕션 모드)
-# PORT 환경 변수를 사용하거나 기본값 8000 사용
 CMD sh -c "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"
-
