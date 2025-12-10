@@ -16,19 +16,15 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 애플리케이션 코드 복사 (모델 파일 제외)
+# 디렉토리 구조 생성
+RUN mkdir -p temp static kosum-v1-tuned sentiment_model sentiment_model/checkpoint-50 sentiment_model/checkpoint-73194
+
+# 애플리케이션 코드 복사 (.dockerignore로 모델 파일 자동 제외)
 COPY app.py .
 COPY src/ src/
 COPY static/ static/
-COPY requirements.txt .
-COPY kosum-v1-tuned/*.json kosum-v1-tuned/ 2>/dev/null || mkdir -p kosum-v1-tuned
-COPY kosum-v1-tuned/*.txt kosum-v1-tuned/ 2>/dev/null || true
-COPY sentiment_model/*.json sentiment_model/ 2>/dev/null || mkdir -p sentiment_model
-COPY sentiment_model/*.txt sentiment_model/ 2>/dev/null || true
-COPY sentiment_model/training_args.bin sentiment_model/ 2>/dev/null || true
-
-# temp 및 static 디렉토리 생성
-RUN mkdir -p temp static kosum-v1-tuned sentiment_model sentiment_model/checkpoint-50 sentiment_model/checkpoint-73194
+COPY kosum-v1-tuned/ kosum-v1-tuned/
+COPY sentiment_model/ sentiment_model/
 
 # 포트 노출
 EXPOSE 8000
