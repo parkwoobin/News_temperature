@@ -565,7 +565,8 @@ class NaverNewsAPICrawler:
             text_to_summarize = '\n'.join(cleaned_lines)
             
             # 너무 길면 앞부분 사용 (본문의 핵심 부분)
-            max_input_length = 512
+            # 요약 모델의 입력 길이 제한 고려 (일반적으로 512 또는 1024 토큰)
+            max_input_length = 1024  # 더 많은 컨텍스트 사용
             if len(text_to_summarize) > max_input_length:
                 # 앞부분만 사용하되, 문장 단위로 자르기
                 truncated = text_to_summarize[:max_input_length]
@@ -574,6 +575,8 @@ class NaverNewsAPICrawler:
                     text_to_summarize = truncated[:last_period + 1]
                 else:
                     text_to_summarize = truncated
+            
+            print(f"[요약] 입력 텍스트 길이: {len(text_to_summarize)}자")
             
             # 토크나이징
             inputs = self.kosum_tuned_tokenizer(
