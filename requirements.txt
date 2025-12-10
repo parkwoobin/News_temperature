@@ -1,21 +1,30 @@
+# PyTorch CPU 버전 (더 작고 빠름)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+torchaudio==2.0.2+cpu
+
+# Transformers 및 의존성
 transformers==4.44.2
 accelerate==0.34.2
-datasets==3.0.1
-evaluate==0.4.2
-rouge-score==0.1.2
 sentencepiece==0.2.0
 protobuf==5.27.2
+
+# FastAPI 및 서버
 uvicorn==0.30.6
 fastapi==0.115.0
 python-multipart==0.0.12
+gunicorn>=21.2.0
+
+# 웹 크롤링
 feedparser==6.0.11
 newspaper3k==0.2.8
 beautifulsoup4==4.12.3
 requests==2.32.3
-sqlite-utils==3.37
 lxml==5.3.0
-lxml_html_clean
-openai>=1.0.0
+
+# 이미지 처리
 Pillow>=10.0.0
-scikit-learn>=1.0.0
-gunicorn>=21.2.0
+
+# OpenAI API (선택사항)
+openai>=1.0.0
