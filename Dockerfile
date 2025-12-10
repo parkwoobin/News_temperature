@@ -24,9 +24,9 @@ COPY app.py .
 COPY src/ src/
 COPY static/ static/
 
-# 설정 파일 복사 (RUN으로 처리하여 파일이 없어도 에러 방지)
-COPY kosum-v1-tuned/ kosum-v1-tuned/ || true
-COPY sentiment_model/ sentiment_model/ || true
+# 설정 파일 복사 (.dockerignore로 모델 파일 자동 제외)
+COPY kosum-v1-tuned/ kosum-v1-tuned/
+COPY sentiment_model/ sentiment_model/
 
 # 포트 노출
 EXPOSE 8000
