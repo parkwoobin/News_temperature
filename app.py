@@ -2146,9 +2146,9 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                     if crawler._is_english_article(title, description, text):
                         continue
                     
-                    # 본문 추출 실패한 경우 description으로 요약 생성
+                    # text가 없으면 description으로 요약 생성
                     if not result.get('text') and description:
-                        print(f"[API] 본문 추출 실패, description으로 요약 생성: {title[:50]}")
+                        print(f"[API] description으로 요약 생성: {title[:50]}")
                         try:
                             result['text'] = crawler.summarize_text(description)
                             result['full_text'] = description  # 감정 분석용으로 description 사용
@@ -2156,10 +2156,13 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
                             print(f"[API] 요약 생성 실패: {e}")
                             result['text'] = description  # 요약 실패 시 description 그대로 사용
                             result['full_text'] = description
-                    
-                    # text가 없으면 description 사용
-                    if not result.get('text'):
+                    elif not result.get('text'):
                         result['text'] = description or ''
+                        result['full_text'] = description or ''
+                    
+                    # full_text가 없으면 text를 full_text로 사용 (감정 분석용)
+                    if not result.get('full_text'):
+                        result['full_text'] = result.get('text', '') or description or ''
                     
                     filtered_results.append(result)
                     if len(filtered_results) >= safe_max_results:
