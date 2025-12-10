@@ -591,12 +591,12 @@ class NaverNewsAPICrawler:
             with torch.no_grad():
                 outputs = self.kosum_tuned_model.generate(
                     **inputs,
-                    max_length=300,  # tuned 모델은 더 긴 요약 가능
-                    min_length=100,  # 최소 길이 조정
-                    num_beams=6,     # 5 -> 6으로 증가 (더 나은 품질)
+                    max_length=200,  # 요약 최대 길이 조정 (더 간결하게)
+                    min_length=50,  # 최소 길이 조정 (너무 짧지 않게)
+                    num_beams=4,     # 빔 서치 수 (품질과 속도 균형)
                     early_stopping=True,
-                    no_repeat_ngram_size=3,  # 반복 방지
-                    length_penalty=1.3,  # 길이 페널티 (더 자연스러운 요약)
+                    no_repeat_ngram_size=2,  # 반복 방지 (2-gram)
+                    length_penalty=1.2,  # 길이 페널티 (더 자연스러운 요약)
                     do_sample=False  # 결정적 생성
                 )
             
