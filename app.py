@@ -2134,29 +2134,53 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             if request.max_results > 3:
                 print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (타임아웃 방지)")
             
-            # 본문 추출 없이 먼저 시도 (더 빠름)
-            # include_full_text=False로 빠른 검색
-            print(f"[API] 빠른 검색 모드로 시도 (본문 추출 없음)")
-            results = crawler.crawl_news_with_full_text(
+            # 가장 간단한 방법: search_news만 사용 (본문 추출 없음)
+            print(f"[API] 간단한 검색 모드로 시도 (API 결과만 사용)")
+            date_to = datetime.now().strftime('%Y%m%d')
+            date_from = (datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d')
+            sort_param = 'date' if request.sort_by == 'date' else 'sim'
+            
+            # 직접 search_news 호출 (가장 빠름)
+            api_result = crawler.search_news(
                 query=request.query,
-                max_results=safe_max_results,
-                include_full_text=False,  # 본문 추출 생략 (타임아웃 방지)
-                date_from=(datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d'),
-                date_to=datetime.now().strftime('%Y%m%d'),
-                sort_by=request.sort_by
+                display=min(safe_max_results, 100),
+                start=1,
+                sort=sort_param,
+                date_from=date_from,
+                date_to=date_to
             )
             
-            # 영어 뉴스 제외
-            if results:
-                filtered_results = []
-                for result in results:
-                    title = result.get('title', '')
-                    description = result.get('description', '')
-                    if not crawler._is_english_article(title, description, ''):
-                        filtered_results.append(result)
-                        if len(filtered_results) >= safe_max_results:
-                            break
-                results = filtered_results
+            if not api_result or 'items' not in api_result:
+                print(f"[API] 검색 결과 없음")
+                results = []
+            else:
+                items = api_result.get('items', [])[:safe_max_results]
+                results = []
+                for item in items:
+                    title = item.get('title', '').replace('<b>', '').replace('</b>', '').strip()
+                    description = item.get('description', '').replace('<b>', '').replace('</b>', '').strip()
+                    
+                    # 영어 뉴스 제외
+                    if crawler._is_english_article(title, description, ''):
+                        continue
+                    
+                    pub_date = item.get('pubDate', '')
+                    pub_date_korean = crawler._format_date_korean(pub_date)
+                    
+                    result = {
+                        'title': title,
+                        'link': item.get('link', ''),
+                        'description': description,
+                        'pubDate': pub_date_korean,
+                        'originallink': item.get('originallink', ''),
+                        'source': crawler._extract_source_from_link(item.get('originallink', '')),
+                        'view_count': 0,  # 조회수는 생략 (타임아웃 방지)
+                        'text': description  # 요약으로 description 사용
+                    }
+                    results.append(result)
+                    
+                    if len(results) >= safe_max_results:
+                        break
             print(f"[API] 뉴스 검색 완료: {len(results)}개 결과")
         except Exception as e:
             print(f"[API] 뉴스 검색 실패: {e}")
@@ -2225,6 +2249,22 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
 async def health_check():
     """헬스 체크 엔드포인트"""
     return {"status": "ok", "message": "뉴스 온도계 서버가 정상 작동 중입니다."}
+
+
+@app.get("/api/test-simple")
+async def test_simple():
+    """간단한 테스트 엔드포인트 (인증 불필요)"""
+    try:
+        return JSONResponse({
+            "success": True,
+            "message": "서버가 정상 작동 중입니다",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
 
 
 if __name__ == "__main__":
