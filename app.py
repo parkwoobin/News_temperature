@@ -2117,53 +2117,33 @@ async def test_api(request: TestRequest, session: dict = Depends(require_login))
             if request.max_results > 10:
                 print(f"[API] 경고: max_results를 {safe_max_results}로 제한 (타임아웃 방지)")
             
-            # 가장 간단한 방법: search_news만 사용 (본문 추출 없음)
-            print(f"[API] 간단한 검색 모드로 시도 (API 결과만 사용)")
+            # 본문 추출과 요약 기능 활성화
+            print(f"[API] 본문 추출 및 요약 기능 활성화")
             date_to = datetime.now().strftime('%Y%m%d')
             date_from = (datetime.now() - timedelta(days=request.days)).strftime('%Y%m%d')
-            sort_param = 'date' if request.sort_by == 'date' else 'sim'
             
-            # 직접 search_news 호출 (가장 빠름)
-            api_result = crawler.search_news(
+            # crawl_news_with_full_text 사용 (본문 추출 + 요약)
+            results = crawler.crawl_news_with_full_text(
                 query=request.query,
-                display=min(safe_max_results, 100),
-                start=1,
-                sort=sort_param,
+                max_results=safe_max_results,
+                include_full_text=True,  # 본문 추출 활성화
                 date_from=date_from,
-                date_to=date_to
+                date_to=date_to,
+                sort_by=request.sort_by
             )
             
-            if not api_result or 'items' not in api_result:
-                print(f"[API] 검색 결과 없음")
-                results = []
-            else:
-                items = api_result.get('items', [])[:safe_max_results]
-                results = []
-                for item in items:
-                    title = item.get('title', '').replace('<b>', '').replace('</b>', '').strip()
-                    description = item.get('description', '').replace('<b>', '').replace('</b>', '').strip()
-                    
-                    # 영어 뉴스 제외
-                    if crawler._is_english_article(title, description, ''):
-                        continue
-                    
-                    pub_date = item.get('pubDate', '')
-                    pub_date_korean = crawler._format_date_korean(pub_date)
-                    
-                    result = {
-                        'title': title,
-                        'link': item.get('link', ''),
-                        'description': description,
-                        'pubDate': pub_date_korean,
-                        'originallink': item.get('originallink', ''),
-                        'source': crawler._extract_source_from_link(item.get('originallink', '')),
-                        'view_count': 0,  # 조회수는 생략 (타임아웃 방지)
-                        'text': description  # 요약으로 description 사용
-                    }
-                    results.append(result)
-                    
-                    if len(results) >= safe_max_results:
-                        break
+            # 영어 뉴스 제외
+            if results:
+                filtered_results = []
+                for result in results:
+                    title = result.get('title', '')
+                    description = result.get('description', '')
+                    text = result.get('text', '')
+                    if not crawler._is_english_article(title, description, text):
+                        filtered_results.append(result)
+                        if len(filtered_results) >= safe_max_results:
+                            break
+                results = filtered_results
             print(f"[API] 뉴스 검색 완료: {len(results)}개 결과")
         except Exception as e:
             print(f"[API] 뉴스 검색 실패: {e}")
