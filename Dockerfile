@@ -35,7 +35,7 @@ COPY sentiment_model/config.json sentiment_model/
 COPY sentiment_model/special_tokens_map.json sentiment_model/
 COPY sentiment_model/tokenizer.json sentiment_model/
 COPY sentiment_model/tokenizer_config.json sentiment_model/
-COPY sentiment_model/training_args.bin sentiment_model/
+# training_args.bin은 선택적 (파일이 없을 수 있음)
 
 # 포트 노출
 EXPOSE 8000
