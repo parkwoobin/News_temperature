@@ -647,7 +647,10 @@ class NaverNewsAPICrawler:
         Returns:
             요약된 텍스트
         """
+        print(f"[요약] summarize_text 호출됨: 모드={self.summary_mode}, 입력 길이={len(text) if text else 0}자")
+        
         if not text or len(text.strip()) == 0:
+            print("[요약] 입력 텍스트가 비어있음")
             return text or ''
         
         # 공백 제거
@@ -657,14 +660,17 @@ class NaverNewsAPICrawler:
         text = self._clean_article_text(text)
         
         if not text or len(text.strip()) == 0:
+            print("[요약] 정제 후 텍스트가 비어있음")
             return ''
         
         # 텍스트가 너무 짧으면 요약하지 않음 (최소 100자 이상)
         if len(text.strip()) < 100:
             # 너무 짧은 경우 앞부분만 반환
+            print(f"[요약] 텍스트가 너무 짧음 ({len(text.strip())}자), 앞부분만 반환")
             return text[:max_length] if len(text) > max_length else text
         
         # 요약 모드에 따라 분기
+        print(f"[요약] 요약 모드: {self.summary_mode}")
         if self.summary_mode == 'openai':
             # OpenAI API를 사용하는 경우
             if self.openai_client:
