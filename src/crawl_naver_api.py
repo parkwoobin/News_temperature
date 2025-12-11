@@ -495,16 +495,22 @@ class NaverNewsAPICrawler:
     
     def _summarize_with_kosum_tuned(self, text: str) -> str:
         """kosum-v1-tuned 모델을 사용하여 텍스트를 요약합니다"""
-        if not TRANSFORMERS_AVAILABLE or self.kosum_tuned_model is None:
+        print(f"[요약] _summarize_with_kosum_tuned 시작: 입력 길이={len(text)}자")
+        if not TRANSFORMERS_AVAILABLE:
+            print("[요약] TRANSFORMERS_AVAILABLE=False, 폴백 사용")
             return self._fallback_summarize(text, 300)
         
         try:
             # 모델이 아직 로드되지 않았으면 로드
             if self.kosum_tuned_model is None:
+                print("[요약] 모델이 로드되지 않음, 로드 시도 중...")
                 self._load_kosum_tuned_model()
             
             if self.kosum_tuned_model is None:
+                print("[요약] 모델 로드 실패, 폴백 사용")
                 return self._fallback_summarize(text, 300)
+            
+            print(f"[요약] 모델 로드 완료, 요약 시작")
             
             # 텍스트 전처리 강화
             # 1. 불필요한 패턴 제거
@@ -627,6 +633,7 @@ class NaverNewsAPICrawler:
                 elif summary.endswith('다') and len(summary) > 10:
                     summary = summary  # '다'로 끝나면 그대로 사용
             
+            print(f"[요약] 최종 요약 길이: {len(summary) if summary else 0}자")
             return summary
             
         except Exception as e:
@@ -711,11 +718,17 @@ class NaverNewsAPICrawler:
         
         elif self.summary_mode == 'kosum-v1-fast':
             # kosum-v1-fast 모델을 사용하는 경우
-            return self._summarize_with_kosum(text)
+            print("[요약] kosum-v1-fast 모델 사용")
+            result = self._summarize_with_kosum(text)
+            print(f"[요약] kosum-v1-fast 요약 완료: 길이={len(result) if result else 0}자")
+            return result
         
         elif self.summary_mode == 'kosum-v1-tuned':
             # kosum-v1-tuned 모델을 사용하는 경우
-            return self._summarize_with_kosum_tuned(text)
+            print("[요약] kosum-v1-tuned 모델 사용")
+            result = self._summarize_with_kosum_tuned(text)
+            print(f"[요약] kosum-v1-tuned 요약 완료: 길이={len(result) if result else 0}자")
+            return result
         
         else:
             # 알 수 없는 모드면 기본 요약 방식 사용
