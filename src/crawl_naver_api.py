@@ -1492,24 +1492,31 @@ class NaverNewsAPICrawler:
             if include_full_text:
                 # 원본 링크가 있으면 원본 링크 사용, 없으면 네이버 링크 사용
                 link_to_use = result['originallink'] or result['link']
+                print(f"[본문 추출] 링크: {link_to_use}")
                 full_text = self.extract_full_text(link_to_use)
+                print(f"[본문 추출] 결과: {'성공' if full_text else '실패'}, 길이={len(full_text) if full_text else 0}자")
                 
                 if full_text:
                     # 전체 본문 저장 (감정 분석용)
                     result['full_text'] = full_text
                     # 본문을 요약하여 저장 (3줄 요약, 화면 표시용)
+                    print(f"[본문 추출] 요약 시작: 본문 길이={len(full_text)}자")
                     result['text'] = self.summarize_text(full_text)
+                    print(f"[본문 추출] 요약 완료: 결과 길이={len(result.get('text', ''))}자")
                     # 성공한 기사만 결과에 추가
                     results.append(result)
                 else:
                     # 본문 추출 실패 시 description으로 요약 생성
                     description = result.get('description', '')
+                    print(f"[본문 추출] 본문 추출 실패, description으로 요약 시도: 길이={len(description)}자")
                     if description:
                         result['text'] = self.summarize_text(description)
                         result['full_text'] = description  # 감정 분석용으로 description 사용
+                        print(f"[본문 추출] description 요약 완료: 결과 길이={len(result.get('text', ''))}자")
                     else:
                         result['text'] = ''
                         result['full_text'] = ''
+                        print(f"[본문 추출] description도 없음, 빈 텍스트 설정")
                     # 본문 추출 실패해도 결과에 포함 (description으로 요약)
                     results.append(result)
                 time.sleep(self.delay)  # 본문 추출 시 추가 대기
