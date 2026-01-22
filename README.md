@@ -14,7 +14,7 @@
 
 - **Backend**: FastAPI, Python 3.11
 - **AI/ML**: Transformers, OpenAI API (선택사항)
-- **배포**: Docker, Docker Compose
+- **배포**: Railway
 - **기타**: Uvicorn, Gunicorn
 
 ## 시작하기
