@@ -22,7 +22,7 @@
 ### 사전 요구사항
 
 - Python 3.11 이상
-- Docker 및 Docker Compose (Docker 배포 시)
+- Railway
 - 네이버 뉴스 API Client ID 및 Client Secret
 
 ### 설치 방법
@@ -62,60 +62,6 @@ pip install -r requirements.txt
 PORT=8000
 ```
 
-### 실행 방법
-
-#### 방법 1: Docker 사용 (권장)
-
-**Windows:**
-```cmd
-deploy.bat
-```
-
-**Linux/Mac:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-또는 수동으로:
-
-```bash
-# 이미지 빌드
-docker build -t news-thermometer .
-
-# 컨테이너 실행
-docker-compose up -d
-
-# 로그 확인
-docker-compose logs -f
-
-# 중지
-docker-compose down
-```
-
-#### 방법 2: 로컬에서 직접 실행
-
-**Windows:**
-```cmd
-start_server.bat
-```
-
-**Linux/Mac:**
-```bash
-python app.py
-```
-
-또는:
-
-```bash
-uvicorn app:app --host 127.0.0.1 --port 8000
-```
-
-#### 방법 3: 테스트 스크립트 사용
-
-```bash
-python test_server.py
-```
 
 ### 접속
 
