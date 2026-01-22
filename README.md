@@ -153,7 +153,7 @@ news2/
 - 용도: 뉴스 기사 요약
 
 ### 감정 분석 모델
-- 위치: `sentiment_model/`
+- 위치: `beomi/KcELECTRA-base/`
 - 용도: 뉴스 기사 감정 분석 (긍정/부정/중립)
 
 ### OpenAI API 지원
