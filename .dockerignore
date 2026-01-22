@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 가상환경
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# 로그
+*.log
+
+# 환경 변수
+.env
+.env.local
+
+# 문서
+*.md
+!README.md
+
+# 테스트
+test_*.py
+*_test.py
+
+# 배포 관련
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# 모델 파일 (이미지 크기 제한 때문에 제외, Git LFS에서 런타임에 다운로드)
+*.safetensors
+*.pt
+*.pth
+*.bin
+kosum-v1-tuned/model.safetensors
+sentiment_model/**/*.safetensors
+sentiment_model/**/*.pt
+sentiment_model/**/*.pth
+sentiment_model/**/*.bin
+
+# 임시 파일
+temp/*.png
+temp/*.jpg
+temp/*.jpeg
+!temp/.gitkeep
+
+# 문서 폴더 (학습 데이터 등)
+문서요약*
