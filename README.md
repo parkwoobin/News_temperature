@@ -14,7 +14,7 @@
 
 - **Backend**: FastAPI, Python 3.11
 - **AI/ML**: Transformers, OpenAI API (선택사항)
-- **배포**: Docker, Docker Compose
+- **배포**: Railway
 - **기타**: Uvicorn, Gunicorn
 
 ## 시작하기
@@ -22,8 +22,8 @@
 ### 사전 요구사항
 
 - Python 3.11 이상
-- Docker 및 Docker Compose (Docker 배포 시)
 - 네이버 뉴스 API Client ID 및 Client Secret
+- (선택) OpenAI API Key
 
 ### 설치 방법
 
@@ -64,58 +64,7 @@ PORT=8000
 
 ### 실행 방법
 
-#### 방법 1: Docker 사용 (권장)
-
-**Windows:**
-```cmd
-deploy.bat
-```
-
-**Linux/Mac:**
-```bash
-chmod +x deploy.sh
-./deploy.sh
-```
-
-또는 수동으로:
-
-```bash
-# 이미지 빌드
-docker build -t news-thermometer .
-
-# 컨테이너 실행
-docker-compose up -d
-
-# 로그 확인
-docker-compose logs -f
-
-# 중지
-docker-compose down
-```
-
-#### 방법 2: 로컬에서 직접 실행
-
-**Windows:**
-```cmd
-start_server.bat
-```
-
-**Linux/Mac:**
-```bash
-python app.py
-```
-
-또는:
-
-```bash
-uvicorn app:app --host 127.0.0.1 --port 8000
-```
-
-#### 방법 3: 테스트 스크립트 사용
-
-```bash
-python test_server.py
-```
+    streamlit app.py
 
 ### 접속
 
@@ -224,42 +173,6 @@ news2/
 
 - **Render**: Docker 기반 배포 지원
 - **Railway**: GitHub 연동 자동 배포
-- **Google Cloud Run**: 서버리스 컨테이너 배포
-- **AWS**: ECS, EC2 등
-- **VPS**: DigitalOcean, Linode 등
-
-### 주의사항
-
-- **메모리 요구사항**: 최소 2GB, 권장 4GB 이상
-- **모델 파일 크기**: Docker 이미지가 5GB 이상일 수 있음
-- **포트 설정**: 기본 포트는 8000 (환경 변수 `PORT`로 변경 가능)
-
-## 문제 해결
-
-### 포트가 이미 사용 중인 경우
-
-```bash
-# 다른 포트 사용
-docker run -p 8001:8000 news-thermometer
-```
-
-또는 환경 변수 설정:
-```bash
-export PORT=8001
-```
-
-### 메모리 부족 오류
-
-- Docker Desktop 설정에서 메모리 할당량을 4GB 이상으로 증가
-- 배포 플랫폼에서 메모리 제한 확인
-
-### 모델 로딩 실패
-
-```bash
-# 모델 파일 확인
-docker run --rm news-thermometer ls -lh kosum-v1-tuned/
-docker run --rm news-thermometer ls -lh sentiment_model/
-```
 
 ### 의존성 설치 오류
 
